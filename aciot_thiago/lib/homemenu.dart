@@ -2,6 +2,7 @@ import 'package:aciot/cardapiotier1.dart';
 import 'package:aciot/customcircleavatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:wifi_iot/wifi_iot.dart';
 import 'package:mqtt_client/mqtt_client.dart' as mqtt;
 import 'dart:async';
 
@@ -202,8 +203,12 @@ class HomeCardMesaWidgetState extends State<HomeCardMesaWidget> {
   String clientIdentifier = 'DeviceESP8266te';
   String topic = 'ledSala/state'; // TROQUE AQUI PARA UM TOPIC EXCLUSIVO SEU
 
+  bool isdevice = false;
   String temp = "--";
   String mesa = "--";
+  String ssidgarcom = "--";
+  String ssid = "--";
+  String password = "--";
 
   mqtt.MqttClient client;
   mqtt.MqttConnectionState connectionState;
@@ -280,12 +285,8 @@ class HomeCardMesaWidgetState extends State<HomeCardMesaWidget> {
     print(event.length);
     final mqtt.MqttPublishMessage recMess =
         event[0].payload as mqtt.MqttPublishMessage;
-    //final mqtt.MqttPublishMessage recMesa =
-    //event[1].payload as mqtt.MqttPublishMessage;
     final String message =
         mqtt.MqttPublishPayload.bytesToStringAsString(recMess.payload.message);
-    //final String message_mesa =
-    //mqtt.MqttPublishPayload.bytesToStringAsString(recMesa.payload.message);
     print('[MQTT client] MQTT message: topic is <${event[0].topic}>, '
         'payload is <-- ${message} -->');
     print(client.connectionState);
@@ -294,8 +295,39 @@ class HomeCardMesaWidgetState extends State<HomeCardMesaWidget> {
     HapticFeedback.vibrate();
     setState(() {
       temp = message;
-      //mesa = message_mesa;
+      var temps = temp.split(",");
+      ssidgarcom = temps[0];
+      mesa = temps[1];
+      storeAPInfos();
     });
+  }
+
+  storeAPInfos() async {
+    String sAPSSID;
+    String sPreSharedKey;
+    try {
+      sAPSSID = await WiFiForIoTPlugin.getWiFiAPSSID();
+    } on PlatformException {
+      sAPSSID = "";
+    }
+
+    try {
+      sPreSharedKey = await WiFiForIoTPlugin.getWiFiAPPreSharedKey();
+    } on PlatformException {
+      sPreSharedKey = "";
+    }
+
+    setState(() {
+      ssid = sAPSSID;
+      password = sPreSharedKey;
+      _isDeviceCorrect();
+    });
+  }
+
+  void _isDeviceCorrect() {
+    if (ssidgarcom == ssid) {
+      isdevice = true;
+    }
   }
 
   @override
@@ -315,25 +347,8 @@ class HomeCardMesaWidgetState extends State<HomeCardMesaWidget> {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Text(
-                    "Mesa",
-                    style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.black,
-                        fontWeight: FontWeight.bold),
-                  ),
-                  //SizedBox(height: size.height * 0.01),
-                  //Text(
-                  // mesa,
-                  // textAlign: TextAlign.center,
-                  // style: TextStyle(
-                  //    fontSize: 35,
-                  //   color: Colors.red,
-                  //   fontWeight: FontWeight.bold
-                  // ),
-                  // ),
-                  SizedBox(height: size.height * 0.01),
-                  Text(
-                    "Esta chamando",
+                    //"Mesa",
+                    ssidgarcom,
                     style: TextStyle(
                         fontSize: 12,
                         color: Colors.black,
@@ -341,11 +356,20 @@ class HomeCardMesaWidgetState extends State<HomeCardMesaWidget> {
                   ),
                   SizedBox(height: size.height * 0.01),
                   Text(
-                    temp,
+                    mesa,
                     textAlign: TextAlign.center,
                     style: TextStyle(
                         fontSize: 35,
                         color: Colors.red,
+                        fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: size.height * 0.01),
+                  Text(
+                    //"Está chamando",
+                    ssid,
+                    style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.black,
                         fontWeight: FontWeight.bold),
                   ),
                 ],
