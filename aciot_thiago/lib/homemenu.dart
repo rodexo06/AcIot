@@ -2,11 +2,15 @@ import 'package:aciot/cardapiotier1.dart';
 import 'package:aciot/customcircleavatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:wifi_iot/wifi_iot.dart';
 import 'package:mqtt_client/mqtt_client.dart' as mqtt;
 import 'dart:async';
+import 'package:vibration/vibration.dart';
 
 class HomeMenuWidget extends StatefulWidget {
+  String hotspot_ssid;
+
+  HomeMenuWidget(this.hotspot_ssid);
+
   @override
   HomeMenuWidgetState createState() => HomeMenuWidgetState();
 }
@@ -44,13 +48,13 @@ class HomeMenuWidgetState extends State<HomeMenuWidget> {
                           children: [
                             Icon(Icons.kitchen),
                             SizedBox(width: 10),
-                            Text("Nome da Empresa")
+                            Text("Astronomiaus")
                           ],
                         ),
                       ),
                     ),
                   ),
-                  HomeCardMesaWidget(),
+                  HomeCardMesaWidget(widget.hotspot_ssid),
                   HomePedidoWidget(),
                 ],
               ),
@@ -68,6 +72,7 @@ class HomePedidoWidget extends StatefulWidget {
 }
 
 class HomePedidoWidgetState extends State<HomePedidoWidget> {
+  String hotspot_ssid;
   @override
   Widget build(BuildContext context) {
     Size size = MediaQuery.of(context).size;
@@ -193,6 +198,10 @@ class HomePedidoWidgetState extends State<HomePedidoWidget> {
 }
 
 class HomeCardMesaWidget extends StatefulWidget {
+  String hotspot_ssid;
+
+  HomeCardMesaWidget(this.hotspot_ssid);
+
   @override
   HomeCardMesaWidgetState createState() => HomeCardMesaWidgetState();
 }
@@ -200,15 +209,14 @@ class HomeCardMesaWidget extends StatefulWidget {
 class HomeCardMesaWidgetState extends State<HomeCardMesaWidget> {
   String broker = 'test.mosquitto.org';
   int port = 1883;
-  String clientIdentifier = 'DeviceESP8266te';
-  String topic = 'ledSala/state'; // TROQUE AQUI PARA UM TOPIC EXCLUSIVO SEU
 
+  String topic = 'aten_int/state';
+  String publish = 'aten_int/set';
   bool isdevice = false;
   String temp = "--";
   String mesa = "--";
-  String ssidgarcom = "--";
-  String ssid = "--";
-  String password = "--";
+  String rede_proxima = "--";
+  List lista = [];
 
   mqtt.MqttClient client;
   mqtt.MqttConnectionState connectionState;
@@ -227,7 +235,18 @@ class HomeCardMesaWidgetState extends State<HomeCardMesaWidget> {
     }
   }
 
+  void _publishToTopic(String publish) {
+    if (connectionState == mqtt.MqttConnectionState.connected) {
+      print('[MQTT client] Publishing to ${publish.trim()}');
+
+      final builder = mqtt.MqttClientPayloadBuilder();
+      builder.addString(widget.hotspot_ssid);
+      client.publishMessage(publish, mqtt.MqttQos.atMostOnce, builder.payload);
+    }
+  }
+
   void _connect() async {
+    String clientIdentifier = "${widget.hotspot_ssid}";
     client = mqtt.MqttClient(broker, '');
     client.port = port;
     client.keepAlivePeriod = 30;
@@ -260,6 +279,8 @@ class HomeCardMesaWidgetState extends State<HomeCardMesaWidget> {
     }
 
     subscription = client.updates.listen(_onMessage);
+
+    _publishToTopic(publish);
     _subscribeToTopic(topic);
   }
 
@@ -292,40 +313,23 @@ class HomeCardMesaWidgetState extends State<HomeCardMesaWidget> {
     print(client.connectionState);
     print("[MQTT client] message with topic: ${event[0].topic}");
     print("[MQTT client] message with message: ${message}");
-    HapticFeedback.vibrate();
     setState(() {
       temp = message;
       var temps = temp.split(",");
-      ssidgarcom = temps[0];
-      mesa = temps[1];
-      storeAPInfos();
-    });
-  }
-
-  storeAPInfos() async {
-    String sAPSSID;
-    String sPreSharedKey;
-    try {
-      sAPSSID = await WiFiForIoTPlugin.getWiFiAPSSID();
-    } on PlatformException {
-      sAPSSID = "";
-    }
-
-    try {
-      sPreSharedKey = await WiFiForIoTPlugin.getWiFiAPPreSharedKey();
-    } on PlatformException {
-      sPreSharedKey = "";
-    }
-
-    setState(() {
-      ssid = sAPSSID;
-      password = sPreSharedKey;
+      rede_proxima = temps[0];
       _isDeviceCorrect();
+      if (isdevice) {
+        mesa = temps[1];
+      } else {
+        mesa = "--";
+      }
     });
   }
 
   void _isDeviceCorrect() {
-    if (ssidgarcom == ssid) {
+    isdevice = false;
+    if (rede_proxima == widget.hotspot_ssid) {
+      Vibration.vibrate(pattern: [100, 150, 50, 500]);
       isdevice = true;
     }
   }
@@ -347,8 +351,7 @@ class HomeCardMesaWidgetState extends State<HomeCardMesaWidget> {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Text(
-                    //"Mesa",
-                    ssidgarcom,
+                    "Mesa",
                     style: TextStyle(
                         fontSize: 12,
                         color: Colors.black,
@@ -365,8 +368,7 @@ class HomeCardMesaWidgetState extends State<HomeCardMesaWidget> {
                   ),
                   SizedBox(height: size.height * 0.01),
                   Text(
-                    //"Está chamando",
-                    ssid,
+                    "Está chamando",
                     style: TextStyle(
                         fontSize: 12,
                         color: Colors.black,

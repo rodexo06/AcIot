@@ -1,0 +1,4 @@
+#Tue Nov 10 16:17:51 BRT 2020
+base.0=C\:\\Users\\Novo\\AndroidStudioProjects\\AcIot\\aciot_thiago\\build\\app\\intermediates\\transforms\\r8\\release\\0\\classes.dex
+path.0=classes.dex
+renamed.0=classes.dex

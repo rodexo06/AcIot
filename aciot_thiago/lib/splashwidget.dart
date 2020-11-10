@@ -1,6 +1,7 @@
 import 'package:aciot/homemenu.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:aciot/login.dart';
 
 class Splash extends StatefulWidget {
   @override
@@ -14,7 +15,7 @@ class _SplashState extends State<Splash> {
     SystemChrome.setEnabledSystemUIOverlays([]);
     Future.delayed(Duration(seconds: 4)).then((_) {
       Navigator.pushReplacement(
-          context, MaterialPageRoute(builder: (context) => HomeMenuWidget()));
+          context, MaterialPageRoute(builder: (context) => LoginWidget()));
     });
   }
 

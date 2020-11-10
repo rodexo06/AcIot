@@ -1,4 +1,4 @@
-#Tue Nov 03 11:36:52 BRT 2020
-base.0=C\:\\Users\\Novo\\AndroidStudioProjects\\aciot\\build\\app\\intermediates\\dex\\debug\\mergeDexDebug\\out\\classes.dex
+#Tue Nov 10 16:27:44 BRT 2020
+base.0=C\:\\Users\\Novo\\AndroidStudioProjects\\AcIot\\aciot_thiago\\build\\app\\intermediates\\dex\\debug\\mergeDexDebug\\out\\classes.dex
 path.0=classes.dex
 renamed.0=classes.dex
